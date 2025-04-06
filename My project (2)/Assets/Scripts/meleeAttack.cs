@@ -6,6 +6,7 @@ public class meleeAttack : MonoBehaviour
     public float attackDamage = 100f;
     public float hitRange = 2f;
     public float rayDuration = 0.2f;
+    public Transform attackOrigin;
     void Update()
     {
         if (Input.GetButtonDown("Fire1"))
@@ -13,24 +14,28 @@ public class meleeAttack : MonoBehaviour
             Attack();
             Debug.Log("Attack");
         }
-        Debug.DrawRay(transform.position, transform.forward * 100, Color.red);
     }
 
     void Attack()
     {
-        Vector3 direction = transform.forward;
-        Vector3 origin = transform.position;
-        RaycastHit hit;
+        Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition.z = 0;
 
-        Debug.DrawRay(origin, direction * hitRange, Color.red, rayDuration);
+        Vector3 direction = (mousePosition - attackOrigin.position).normalized;
 
-        if(Physics.Raycast(origin, direction, out hit, hitRange))
+        Vector3 offsetPosition = attackOrigin.position + direction * 0.6f;
+
+        Debug.DrawRay(offsetPosition, direction * hitRange, Color.red, rayDuration);
+
+        RaycastHit2D hit = Physics2D.Raycast(offsetPosition, direction, hitRange);
+
+        if(hit.collider != null)
         {
-            Debug.Log("Raycast hit: " + hit.transform.name);
+            Debug.Log("Hit: " + hit.collider.name);
 
-            if(hit.transform.CompareTag("Enemy"))
+            if(hit.collider.CompareTag("Enemy") && hit.collider.CompareTag("Player") == false)
             {
-                hit.transform.SendMessage("TakeDamage", attackDamage, SendMessageOptions.DontRequireReceiver);
+                hit.collider.SendMessage("TakeDamage", attackDamage, SendMessageOptions.DontRequireReceiver);
                 Debug.Log("Hit");
             }
         }
